@@ -9,9 +9,11 @@
 
 ## Installation
 Install the latest version:
+
     cordova plugin add https://github.com/Mulwanndwa/cordova-plugin-kozend1-printer-plus-scanner
 
 And then execute:
+
     cordova build
 
 
