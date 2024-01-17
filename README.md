@@ -4,9 +4,7 @@
 </p>
 
 ## Supported Platforms
-- iOS 8 or newer
-- Android KitKat or newer
-- Universal Windows Platform
+- Android
 
 
 ## Installation
