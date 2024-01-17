@@ -219,14 +219,31 @@ public class Printer extends CordovaPlugin{
             return true;
         }
 
+        if (action.equalsIgnoreCase("printKozenDataCenter")) {
+            String msg = args.getString(0);
+            printKozenDataCenter(msg);
+            return true;
+        }
+
         if (action.equalsIgnoreCase("printKozenTitleData")) {
             String msg = args.getString(0);
             printKozenTitleData(msg);
             return true;
         }
+
         if (action.equalsIgnoreCase("printKozenSubTitleData")) {
             String msg = args.getString(0);
             printKozenSubTitleData(msg);
+            return true;
+        }
+        if (action.equalsIgnoreCase("printKozenSubTitleDataLeft")) {
+            String msg = args.getString(0);
+            printKozenSubTitleDataLeft(msg);
+            return true;
+        }
+        if (action.equalsIgnoreCase("printKozenDataStart")) {
+            String msg = args.getString(0);
+            printKozenDataStart(msg);
             return true;
         }
 
@@ -241,9 +258,24 @@ public class Printer extends CordovaPlugin{
         printHelper.printData(msg, 42, 0, false, 1, 80, 0);
     }
 
+    private void printKozenSubTitleDataLeft(String msg) {
+        printHelper.printData(msg, 42, 0, false, 0, 80, 0);
+    }
+
     private void printKozenData(String msg) {
         command.success("Done printing");
         printHelper.printData(msg, 32, 0, false, 0, 80, 0);
+        printSpace(5);
+        printHelper.printStart();
+        printHelper.cutPaper(1);
+
+    }
+    private void printKozenDataCenter(String msg) {
+        printHelper.printData(msg, 32, 0, false, 1, 80, 0);
+
+    }
+    private void printKozenDataStart(String msg) {
+        command.success("Done printing");
         printSpace(5);
         printHelper.printStart();
         printHelper.cutPaper(1);
@@ -590,14 +622,14 @@ public class Printer extends CordovaPlugin{
      */
     @Override
     public void onDestroy() {
-    if(pm != null && listener != null && command != null && view != null) {
-           pm       = null;
+ 	if(pm != null && listener != null && command != null && view != null) {
+       	   pm       = null;
            listener = null;
            command  = null;
            view     = null;
 
            super.onDestroy();
-    }
+	}
     }
 
     /**
