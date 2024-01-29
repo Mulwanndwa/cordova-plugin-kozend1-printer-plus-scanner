@@ -92,6 +92,11 @@ exports.printKozenDataCenter = function (callback, error,str) {
     var fn = this._createCallbackFn(callback);
     exec(fn, error, 'Printer', 'printKozenDataCenter', [str]);
 };
+
+exports.printKozenDataLeft = function (callback, error,str) {
+    var fn = this._createCallbackFn(callback);
+    exec(fn, error, 'Printer', 'printKozenDataLeft', [str]);
+};
 exports.printKozenTitleData = function (callback, error,str) {
     var fn = this._createCallbackFn(callback);
     exec(fn, error, 'Printer', 'printKozenTitleData', [str]);
@@ -113,6 +118,10 @@ exports.printKozenSubTitleDataLeft = function (callback, error,str) {
 exports.printKozenDataStart = function (callback, error,str) {
     var fn = this._createCallbackFn(callback);
     exec(fn, error, 'Printer', 'printKozenDataStart', [str]);
+};
+exports.printKozenQrcode = function (callback, error,str) {
+    var fn = this._createCallbackFn(callback);
+    exec(fn, error, 'Printer', 'printKozenQrcode', [str]);
 };
 /**
  * @deprecated API call. Use `check` instead!
