@@ -219,6 +219,11 @@ public class Printer extends CordovaPlugin{
             return true;
         }
 
+        if (action.equalsIgnoreCase("printKozenDataLeft")) {
+            String msg = args.getString(0);
+            printKozenDataLeft(msg);
+            return true;
+        }
         if (action.equalsIgnoreCase("printKozenDataCenter")) {
             String msg = args.getString(0);
             printKozenDataCenter(msg);
@@ -247,10 +252,19 @@ public class Printer extends CordovaPlugin{
             return true;
         }
 
+        if (action.equalsIgnoreCase("printKozenQrcode")) {
+            String msg = args.getString(0);
+            printKozenDataStart(msg);
+            return true;
+        }
+
 
         return false;
     }
 
+    private void printKozenQrcode(String msg) {
+        printHelper.printQRCode(msg, 2, 1);;
+    }
     private void printKozenTitleData(String msg) {
         printHelper.printData(msg, 62, 1, false, 1, 80, 0);
     }
@@ -271,6 +285,10 @@ public class Printer extends CordovaPlugin{
 
     }
     private void printKozenDataCenter(String msg) {
+        printHelper.printData(msg, 32, 1, false, 1, 80, 0);
+
+    }
+    private void printKozenDataLeft(String msg) {
         printHelper.printData(msg, 32, 0, false, 1, 80, 0);
 
     }
@@ -622,14 +640,14 @@ public class Printer extends CordovaPlugin{
      */
     @Override
     public void onDestroy() {
- 	if(pm != null && listener != null && command != null && view != null) {
-       	   pm       = null;
+    if(pm != null && listener != null && command != null && view != null) {
+           pm       = null;
            listener = null;
            command  = null;
            view     = null;
 
            super.onDestroy();
-	}
+    }
     }
 
     /**
