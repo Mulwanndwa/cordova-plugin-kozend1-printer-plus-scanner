@@ -152,6 +152,7 @@ public class Printer extends CordovaPlugin{
     private static final int MSG_REFRESH_SHOWRESULT = 0x11;
     private static final int MSG_REFRESH_NO_SHOWRESULT = 0x12;
     private static final int MSG_REFRESH_UPGRADING_SYSTEM = 0x13;
+    public final static byte CASH_BOX_COMMAND[] = new byte[] {0x1b,0x70,0x00};
 
     private static final String TAG = "MainActivity";
 
@@ -193,7 +194,8 @@ public class Printer extends CordovaPlugin{
             return true;
         }
         if (action.equalsIgnoreCase("opencashBox")) {
-            IminSDKManager.opencashBox();
+            //IminSDKManager.opencashBox();
+            printHelper.printData(Arrays.toString(CASH_BOX_COMMAND),42, 0, false, 1, 80, 0);
             return true;
         }
         if (action.equalsIgnoreCase("showScan")) {
@@ -640,14 +642,14 @@ public class Printer extends CordovaPlugin{
      */
     @Override
     public void onDestroy() {
-    if(pm != null && listener != null && command != null && view != null) {
-           pm       = null;
+ 	if(pm != null && listener != null && command != null && view != null) {
+       	   pm       = null;
            listener = null;
            command  = null;
            view     = null;
 
            super.onDestroy();
-    }
+	}
     }
 
     /**
