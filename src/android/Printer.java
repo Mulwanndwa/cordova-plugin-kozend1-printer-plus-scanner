@@ -87,6 +87,7 @@ import android.content.pm.PackageManager;
 import java.io.IOException;
 
 import com.elotouch.AP80.sdkhelper.AP80PrintHelper;
+import com.xcheng.serialport.utils.SerialHelper;
 
 //import com.google.zxing.client.android.CaptureActivity;
 /**
@@ -178,7 +179,8 @@ public class Printer extends CordovaPlugin{
         printHelper = AP80PrintHelper.getInstance();
         printHelper.initPrint(cordova.getActivity().getApplicationContext());
 
-
+	initSerialPort("/dev/ttyS0");
+	    
         if (action.equalsIgnoreCase("check")) {
             check();
             return true;
@@ -681,5 +683,80 @@ public class Printer extends CordovaPlugin{
                 printer != null ? printer.getLocalId() : null);
 
         command.sendPluginResult(res);
+    }
+private void initSerialPort(String str_SerialPort) {
+        serialHelper = new SerialHelper(str_SerialPort, 115200, selectParity, selectDataBits, selectStopBit) {
+            @Override
+            protected void onDataReceived(byte[] buff) {
+                try {
+                    sb = new StringBuilder();
+                    sb.append("[Read]");
+                    sb.append("[").append("Txt").append("] ");
+                    sb.append(new String(buff));
+                    sb.append("\r\n");
+                    Log.i(TAG, "receive：" + sb.toString());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            textView.setText(sb.toString());
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            protected void onSendDataReceived(byte[] buff) {
+                try {
+                    sb = new StringBuilder();
+                    sb.append("[Send]");
+                    sb.append("[").append("Txt").append("] ");
+                    sb.append(new String(buff));
+                    sb.append("\r\n");
+                    Log.i(TAG, "Send：" + sb.toString());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        try {
+            serialHelper.open();
+            Log.i(TAG, "open serial successfully！");
+        } catch (Exception e) {
+            Log.i(TAG, "open serial failed！" + e.toString());
+            serialHelper = null;
+            Log.i(TAG, "open serial failed！" + e.toString());
+        }
+    }
+
+    public void sendText(String text) {
+        if (!serialOpened()) {
+            return;
+        }
+        serialHelper.sendTxt(text);
+    }
+
+    private boolean serialOpened() {
+        if (serialHelper == null) return false;
+        return serialHelper.isOpen();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (serialHelper != null && serialHelper.isOpen()) {
+            serialHelper.close();
+        }
+        Log.i(TAG, "onPause");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (serialHelper != null && serialHelper.isOpen()) {
+            serialHelper.close();
+        }
+        Log.i(TAG, "onDestroy");
     }
 }
