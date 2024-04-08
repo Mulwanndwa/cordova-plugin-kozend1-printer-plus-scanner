@@ -65,6 +65,7 @@ import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BMP_DISPLAY;
 import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_START_SCAN;
 import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_UPDATE;
 import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_VERSION;
+import static com.serenegiant.utils.UIThreadHelper.runOnUiThread;
 
 import com.android.sublcdlibrary.SubLcdException;
 import com.android.sublcdlibrary.SubLcdHelper;
@@ -167,6 +168,13 @@ public class Printer extends CordovaPlugin{
 
     private AP80PrintHelper printHelper;
 
+    private final int selectParity = 0;
+    private final int selectDataBits = 8;
+    private final int selectStopBit = 1;
+    private SerialHelper serialHelper;
+    private StringBuilder sb;
+    private StringBuilder data;
+
     @Override
     public boolean execute (String action, JSONArray args,
                             CallbackContext callback) throws JSONException {
@@ -179,8 +187,8 @@ public class Printer extends CordovaPlugin{
         printHelper = AP80PrintHelper.getInstance();
         printHelper.initPrint(cordova.getActivity().getApplicationContext());
 
-	initSerialPort("/dev/ttyS0");
-	    
+    initSerialPort("/dev/ttyS0");
+        
         if (action.equalsIgnoreCase("check")) {
             check();
             return true;
@@ -197,7 +205,8 @@ public class Printer extends CordovaPlugin{
         }
         if (action.equalsIgnoreCase("opencashBox")) {
             //IminSDKManager.opencashBox();
-            printHelper.printData(Arrays.toString(CASH_BOX_COMMAND),42, 0, false, 1, 80, 0);
+            //printHelper.printData(Arrays.toString(CASH_BOX_COMMAND),42, 0, false, 1, 80, 0);
+            sendText("0103402300016000");
             return true;
         }
         if (action.equalsIgnoreCase("showScan")) {
@@ -644,14 +653,14 @@ public class Printer extends CordovaPlugin{
      */
     @Override
     public void onDestroy() {
- 	if(pm != null && listener != null && command != null && view != null) {
-       	   pm       = null;
+    if(pm != null && listener != null && command != null && view != null) {
+           pm       = null;
            listener = null;
            command  = null;
            view     = null;
 
            super.onDestroy();
-	}
+    }
     }
 
     /**
@@ -698,7 +707,7 @@ private void initSerialPort(String str_SerialPort) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            textView.setText(sb.toString());
+                            //textView.setText(sb.toString());
                         }
                     });
                 } catch (Exception e) {
@@ -742,21 +751,4 @@ private void initSerialPort(String str_SerialPort) {
         return serialHelper.isOpen();
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (serialHelper != null && serialHelper.isOpen()) {
-            serialHelper.close();
-        }
-        Log.i(TAG, "onPause");
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (serialHelper != null && serialHelper.isOpen()) {
-            serialHelper.close();
-        }
-        Log.i(TAG, "onDestroy");
-    }
 }
