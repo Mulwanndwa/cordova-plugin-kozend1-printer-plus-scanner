@@ -107,6 +107,7 @@
             target="res/layout/select_printer_activity.xml" />
         <source-file src="src/android/IminLibs.jar" target-dir="libs"/>
             <source-file src="src/android/D0111sublibrary-release.aar" target-dir="libs"/>
+            <source-file src="src/android/serialport-release.aar" target-dir="libs"/>
     </platform>
 
     <!-- windows -->
