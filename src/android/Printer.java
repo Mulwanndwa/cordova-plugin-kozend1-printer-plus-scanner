@@ -67,8 +67,8 @@ import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_UPDATE;
 import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_VERSION;
 import static com.serenegiant.utils.UIThreadHelper.runOnUiThread;
 
-import com.android.sublcdlibrary.SubLcdException;
-import com.android.sublcdlibrary.SubLcdHelper;
+ import com.android.sublcdlibrary.SubLcdException;
+ import com.android.sublcdlibrary.SubLcdHelper;
 
 import android.widget.Toast;
 import android.text.Layout;
@@ -88,8 +88,6 @@ import android.content.pm.PackageManager;
 import java.io.IOException;
 
 import com.elotouch.AP80.sdkhelper.AP80PrintHelper;
-import com.xcheng.serialport.utils.SerialHelper;
-
 //import com.google.zxing.client.android.CaptureActivity;
 /**
  * Plugin to print HTML documents. Therefore it creates an invisible web view
@@ -171,7 +169,6 @@ public class Printer extends CordovaPlugin{
     private final int selectParity = 0;
     private final int selectDataBits = 8;
     private final int selectStopBit = 1;
-    private SerialHelper serialHelper;
     private StringBuilder sb;
     private StringBuilder data;
 
@@ -186,9 +183,7 @@ public class Printer extends CordovaPlugin{
         AP80PrintHelper.getInstance().initPrint(cordova.getActivity().getApplicationContext());
         printHelper = AP80PrintHelper.getInstance();
         printHelper.initPrint(cordova.getActivity().getApplicationContext());
-
-    initSerialPort("/dev/ttyS0");
-        
+       
         if (action.equalsIgnoreCase("check")) {
             check();
             return true;
@@ -204,14 +199,18 @@ public class Printer extends CordovaPlugin{
             return true;
         }
         if (action.equalsIgnoreCase("opencashBox")) {
-            //IminSDKManager.opencashBox();
-            //printHelper.printData(Arrays.toString(CASH_BOX_COMMAND),42, 0, false, 1, 80, 0);
-            sendText("0103402300016000");
+            printHelper.openCashBox();
             return true;
         }
         if (action.equalsIgnoreCase("showScan")) {
             scanResult1 = "";
             showScan(callback);
+            return true;
+        }
+
+        if (action.equalsIgnoreCase("stopScan")) {
+            //scanResult1 = "";
+            stopScan(callback);
             return true;
         }
 
@@ -302,7 +301,7 @@ public class Printer extends CordovaPlugin{
 
     }
     private void printKozenDataLeft(String msg) {
-        printHelper.printData(msg, 32, 0, false, 1, 80, 0);
+        printHelper.printData(msg, 32, 0, false, 0, 80, 0);
 
     }
     private void printKozenDataStart(String msg) {
@@ -378,6 +377,10 @@ public class Printer extends CordovaPlugin{
             callback.success(scanResult1);
         }
     }
+    public void stopScan(CallbackContext callback) {
+        SubLcdHelper.getInstance().release();
+        callback.success("Scanner Stopped");
+    }
     public void datatrigger(String s, int cmd) {
         //command.success("Testing");
         cordova.getActivity().runOnUiThread(() -> {
@@ -430,13 +433,13 @@ public class Printer extends CordovaPlugin{
             public void run() {
                 String text = "First Name:  "+first_name+"\n"+
                         "Last Name:  "+last_name+"\n";
-                try {
-                    SubLcdHelper.getInstance().sendText(text, Layout.Alignment.ALIGN_CENTER, 36);
-                    cmdflag = CMD_PROTOCOL_BMP_DISPLAY;
-                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_NO_SHOWRESULT, 300);
-                } catch (SubLcdException e) {
-                    e.printStackTrace();
-                }
+//                try {
+//                    //SubLcdHelper.getInstance().sendText(text, Layout.Alignment.ALIGN_CENTER, 36);
+//                    cmdflag = CMD_PROTOCOL_BMP_DISPLAY;
+//                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_NO_SHOWRESULT, 300);
+//                } catch (SubLcdException e) {
+//                    e.printStackTrace();
+//                }
             }
         });
 
@@ -692,63 +695,6 @@ public class Printer extends CordovaPlugin{
                 printer != null ? printer.getLocalId() : null);
 
         command.sendPluginResult(res);
-    }
-private void initSerialPort(String str_SerialPort) {
-        serialHelper = new SerialHelper(str_SerialPort, 115200, selectParity, selectDataBits, selectStopBit) {
-            @Override
-            protected void onDataReceived(byte[] buff) {
-                try {
-                    sb = new StringBuilder();
-                    sb.append("[Read]");
-                    sb.append("[").append("Txt").append("] ");
-                    sb.append(new String(buff));
-                    sb.append("\r\n");
-                    Log.i(TAG, "receive：" + sb.toString());
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            //textView.setText(sb.toString());
-                        }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            protected void onSendDataReceived(byte[] buff) {
-                try {
-                    sb = new StringBuilder();
-                    sb.append("[Send]");
-                    sb.append("[").append("Txt").append("] ");
-                    sb.append(new String(buff));
-                    sb.append("\r\n");
-                    Log.i(TAG, "Send：" + sb.toString());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        try {
-            serialHelper.open();
-            Log.i(TAG, "open serial successfully！");
-        } catch (Exception e) {
-            Log.i(TAG, "open serial failed！" + e.toString());
-            serialHelper = null;
-            Log.i(TAG, "open serial failed！" + e.toString());
-        }
-    }
-
-    public void sendText(String text) {
-        if (!serialOpened()) {
-            return;
-        }
-        serialHelper.sendTxt(text);
-    }
-
-    private boolean serialOpened() {
-        if (serialHelper == null) return false;
-        return serialHelper.isOpen();
     }
 
 }
