@@ -162,6 +162,8 @@ public class Printer extends CordovaPlugin implements SubLcdHelper.VuleCalBack{
     private StringBuilder sb;
     private StringBuilder data;
 
+    private String company = "Ordev";
+
     @Override
     public boolean execute (String action, JSONArray args,
                             CallbackContext callback) throws JSONException {
@@ -188,7 +190,15 @@ public class Printer extends CordovaPlugin implements SubLcdHelper.VuleCalBack{
 
         if (action.equalsIgnoreCase("setSubScText")) {
             String msg = args.getString(0);
+            company = msg;
             setSubScText(msg);
+            return true;
+        }
+
+        if (action.equalsIgnoreCase("setSubScTextSmall")) {
+            String msg = args.getString(0);
+            company = msg;
+            setSubScTextSmall(msg);
             return true;
         }
 
@@ -333,7 +343,7 @@ public class Printer extends CordovaPlugin implements SubLcdHelper.VuleCalBack{
                     SubLcdHelper.getInstance().readData();
                     mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
                     mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 100);
-
+                    //setSubScText(company);
                     break;
                 case MSG_REFRESH_NO_SHOWRESULT:
 
@@ -374,14 +384,24 @@ public class Printer extends CordovaPlugin implements SubLcdHelper.VuleCalBack{
             //throw new RuntimeException(e);
         }
     }
+
+    public void setSubScTextSmall(String msg) {
+        Log.d("Company name",msg);
+        try {
+            ApplicationInfo appInfo = cordova.getActivity().getApplicationInfo();
+
+            SubLcdHelper.getInstance().sendText(msg, Layout.Alignment.ALIGN_NORMAL,50);
+        } catch (SubLcdException e) {
+            //throw new RuntimeException(e);
+        }
+    }
     public void checkScanResult(CallbackContext callback) {
         cordova.getActivity().runOnUiThread(() -> {
 
             Log.i("scanResult1",scanResult1);
 
-            //setSubScText();
-
             if(scanResult1 != "" && scanResult1 != null){
+                //setSubScText(company);
                 callback.success(scanResult1);
             }else{
                 callback.success("");
