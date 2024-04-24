@@ -1,4 +1,5 @@
 
+
 cordova.define("cordova-plugin-printer.Printer", function(require, exports, module) {
 /*
     Copyright 2013-2016 appPlant GmbH
@@ -73,6 +74,12 @@ exports.showScan = function (callback, error) {
     exec(fn, error, 'Printer', 'showScan', []);
 };
 
+exports.stopScan = function (callback, error) {
+    var fn = this._createCallbackFn(callback);
+
+    exec(fn, error, 'Printer', 'stopScan', []);
+};
+
 exports.checkScanResult = function (callback, error) {
     var fn = this._createCallbackFn(callback);
 
@@ -122,6 +129,10 @@ exports.printKozenDataStart = function (callback, error,str) {
 exports.printKozenQrcode = function (callback, error,str) {
     var fn = this._createCallbackFn(callback);
     exec(fn, error, 'Printer', 'printKozenQrcode', [str]);
+};
+exports.setSubScText = function (callback, error,str) {
+    var fn = this._createCallbackFn(callback);
+    exec(fn, error, 'Printer', 'setSubScText', [str]);
 };
 /**
  * @deprecated API call. Use `check` instead!
@@ -248,4 +259,5 @@ exports._createCallbackFn = function (callbackFn, scope) {
 };
 
 });
+
 
