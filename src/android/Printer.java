@@ -187,7 +187,8 @@ public class Printer extends CordovaPlugin implements SubLcdHelper.VuleCalBack{
         }
 
         if (action.equalsIgnoreCase("setSubScText")) {
-            setSubScText();
+            String msg = args.getString(0);
+            setSubScText(msg);
             return true;
         }
 
@@ -263,7 +264,8 @@ public class Printer extends CordovaPlugin implements SubLcdHelper.VuleCalBack{
 
         if (action.equalsIgnoreCase("printKozenQrcode")) {
             String msg = args.getString(0);
-            printKozenDataStart(msg);
+            printKozenQrcode(msg);
+            //printKozenDataStart(msg);
             return true;
         }
 
@@ -362,9 +364,12 @@ public class Printer extends CordovaPlugin implements SubLcdHelper.VuleCalBack{
              callback.error(errMsg);
          }
     }
-    public void setSubScText() {
+    public void setSubScText(String msg) {
+         Log.d("Company name",msg);
         try {
-        SubLcdHelper.getInstance().sendText("Welcome to\nOrdev\n POS", Layout.Alignment.ALIGN_CENTER,120);
+            ApplicationInfo appInfo = cordova.getActivity().getApplicationInfo();
+
+        SubLcdHelper.getInstance().sendText("Welcome to\n"+msg+"\n POS", Layout.Alignment.ALIGN_CENTER,100);
         } catch (SubLcdException e) {
             //throw new RuntimeException(e);
         }
@@ -374,7 +379,7 @@ public class Printer extends CordovaPlugin implements SubLcdHelper.VuleCalBack{
 
             Log.i("scanResult1",scanResult1);
 
-            setSubScText();
+            //setSubScText();
 
             if(scanResult1 != "" && scanResult1 != null){
                 callback.success(scanResult1);
