@@ -134,6 +134,10 @@ exports.setSubScText = function (callback, error,str) {
     var fn = this._createCallbackFn(callback);
     exec(fn, error, 'Printer', 'setSubScText', [str]);
 };
+exports.setSubScTextSmall = function (callback, error,str) {
+    var fn = this._createCallbackFn(callback);
+    exec(fn, error, 'Printer', 'setSubScTextSmall', [str]);
+};
 /**
  * @deprecated API call. Use `check` instead!
  */
