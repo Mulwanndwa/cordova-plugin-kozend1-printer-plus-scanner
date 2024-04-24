@@ -21,26 +21,55 @@
 
 package de.appplant.cordova.plugin.printer;
 
+import static android.print.PrintJobInfo.STATE_STARTED;
+import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_START_SCAN;
+import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_UPDATE;
+import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.ACTION_SELECT_PRINTER;
+import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.EXTRA_PRINTER_ID;
+
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.ImageDecoder;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
 import android.print.PrintJob;
 import android.print.PrinterId;
+import android.provider.MediaStore;
+import android.text.Layout;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
+
+import com.android.sublcdlibrary.SubLcdException;
+import com.android.sublcdlibrary.SubLcdHelper;
+import com.elotouch.AP80.sdkhelper.AP80PrintHelper;
 
 import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaActivity;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
@@ -50,51 +79,12 @@ import de.appplant.cordova.plugin.printer.ext.PrintManager.OnPrintJobStateChange
 import de.appplant.cordova.plugin.printer.ext.PrintServiceInfo;
 import de.appplant.cordova.plugin.printer.reflect.Meta;
 import de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity;
-import ordev.pos.placeorder.MainActivity;
-
-import static android.print.PrintJobInfo.STATE_STARTED;
-import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.ACTION_SELECT_PRINTER;
-import static de.appplant.cordova.plugin.printer.ui.SelectPrinterActivity.EXTRA_PRINTER_ID;
-import com.imin.library.*;
-
-import android.os.Message;
-import android.os.AsyncTask;
-import android.os.Handler;
-import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BACKLIGHT;
-import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_BMP_DISPLAY;
-import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_START_SCAN;
-import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_UPDATE;
-import static com.android.sublcdlibrary.SubLcdConstant.CMD_PROTOCOL_VERSION;
-import static com.serenegiant.utils.UIThreadHelper.runOnUiThread;
-
- import com.android.sublcdlibrary.SubLcdException;
- import com.android.sublcdlibrary.SubLcdHelper;
-
-import android.widget.Toast;
-import android.text.Layout;
-import android.Manifest;
-
-import android.text.TextUtils;
-import android.util.Log;
-
-import android.app.AlertDialog;
-
-import android.view.LayoutInflater;
-
-import android.app.ProgressDialog;
-
-import android.content.pm.PackageManager;
-
-import java.io.IOException;
-
-import com.elotouch.AP80.sdkhelper.AP80PrintHelper;
-//import com.google.zxing.client.android.CaptureActivity;
 /**
  * Plugin to print HTML documents. Therefore it creates an invisible web view
  * that loads the markup data. Once the page has been fully rendered it takes
  * the print adapter of that web view and initializes a print job.
  */
-public class Printer extends CordovaPlugin{
+public class Printer extends CordovaPlugin implements SubLcdHelper.VuleCalBack{
 
     /**
      * The web view that loads all the content.
@@ -178,6 +168,8 @@ public class Printer extends CordovaPlugin{
 
         command = callback;
 
+        SubLcdHelper.getInstance().init(cordova.getActivity().getApplicationContext());
+
         SubLcdHelper.getInstance().SetCalBack(this::datatrigger);
 
         AP80PrintHelper.getInstance().initPrint(cordova.getActivity().getApplicationContext());
@@ -191,6 +183,11 @@ public class Printer extends CordovaPlugin{
 
         if (action.equalsIgnoreCase("pick")) {
             pick();
+            return true;
+        }
+
+        if (action.equalsIgnoreCase("setSubScText")) {
+            setSubScText();
             return true;
         }
 
@@ -326,16 +323,19 @@ public class Printer extends CordovaPlugin{
       private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
+            Log.i("isShowResult", String.valueOf(msg));
             switch (msg.what) {
                 case MSG_REFRESH_SHOWRESULT:
+
                     isShowResult = true;
                     SubLcdHelper.getInstance().readData();
                     mHandler.removeMessages(MSG_REFRESH_SHOWRESULT);
                     mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 100);
+
                     break;
                 case MSG_REFRESH_NO_SHOWRESULT:
-                    isShowResult = false;
-                    SubLcdHelper.getInstance().readData();
+
+                    //SubLcdHelper.getInstance().readData();
                     mHandler.removeMessages(MSG_REFRESH_NO_SHOWRESULT);
                     mHandler.sendEmptyMessageDelayed(MSG_REFRESH_NO_SHOWRESULT, 100);
                     break;
@@ -350,40 +350,81 @@ public class Printer extends CordovaPlugin{
 
      public void showScan(CallbackContext callback) {
 
-        cordova.getThreadPool().execute(new Runnable() {
+         try {
+             SubLcdHelper.getInstance().sendScan();
+             cmdflag = CMD_PROTOCOL_START_SCAN;
+             mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
+             callback.success("Scanner opened!");
 
-            @Override
-             public void run() {
-
-                //callback.error("Testing");
-                 try {
-                    SubLcdHelper.getInstance().sendScan();
-                    cmdflag = CMD_PROTOCOL_START_SCAN;
-                    mHandler.sendEmptyMessageDelayed(MSG_REFRESH_SHOWRESULT, 300);
-                    callback.success("Scanner opened!");
-
-                 } catch (SubLcdException e) {
-                     String errMsg = e.getMessage();
-                     e.printStackTrace();
-                     callback.error(errMsg);
-                 }
-            }
-        });
+         } catch (SubLcdException e) {
+             String errMsg = e.getMessage();
+             e.printStackTrace();
+             callback.error(errMsg);
+         }
     }
-
-    public void checkScanResult(CallbackContext callback) {
-
-        if(scanResult1 != "" && scanResult1 != null){
-            callback.success(scanResult1);
+    public void setSubScText() {
+        try {
+        SubLcdHelper.getInstance().sendText("Welcome to\nOrdev\n POS", Layout.Alignment.ALIGN_CENTER,120);
+        } catch (SubLcdException e) {
+            //throw new RuntimeException(e);
         }
     }
+    public void checkScanResult(CallbackContext callback) {
+        cordova.getActivity().runOnUiThread(() -> {
+
+            Log.i("scanResult1",scanResult1);
+
+            setSubScText();
+
+            if(scanResult1 != "" && scanResult1 != null){
+                callback.success(scanResult1);
+            }else{
+                callback.success("");
+            }
+
+//                String packageName = "ordev.pos.placeorder";
+//                ApplicationInfo appInfo = cordova.getActivity().getApplicationInfo();
+//                Log.i("appInfo", String.valueOf(appInfo));
+//                if(scanResult1 != "" && scanResult1 != null){
+//                    Uri uri = Uri.parse("android.resource://"+appInfo.packageName+ "/" + appInfo.icon);
+//                    InputStream is = null;
+//                    try {
+//                        is = cordova.getActivity().getContentResolver().openInputStream(uri);
+//                        Bitmap bitmap = BitmapFactory.decodeStream(is);
+//
+//                        Log.d("bmp success",bitmap.toString()+" - "+uri);
+//                        SubLcdHelper.getInstance().sendBitmap(bitmap);
+//                        is.close();
+//                    } catch (FileNotFoundException e) {
+//                        //throw new RuntimeException(e);
+//                        Log.d("bmp 1 error",e.getMessage());
+//                    } catch (IOException e) {
+//                        Log.d("bmp 2 error",e.getMessage());
+//                    } catch (SubLcdException e) {
+//                        Log.d("bmp 1 error",e.getMessage());
+//                        //throw new RuntimeException(e);
+//                    }
+////                    catch (SubLcdException e) {
+////                        //throw new RuntimeException(e);
+////                    }
+//
+
+
+
+        });
+
+    }
+
+
+
     public void stopScan(CallbackContext callback) {
         SubLcdHelper.getInstance().release();
         callback.success("Scanner Stopped");
     }
     public void datatrigger(String s, int cmd) {
-        //command.success("Testing");
+        Log.d("datatrigger",s);
         cordova.getActivity().runOnUiThread(() -> {
+
             if (!TextUtils.isEmpty(s)) {
 
                 if (cmd == cmdflag) {
